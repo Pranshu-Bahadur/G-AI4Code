@@ -19,6 +19,14 @@ class ADataset(Dataset, Pathfinder):
         self.jsons = self.fext('json')
         self.csvs = self.fext('csv')
 
+        self.jsons = merge(self.jsons, self.jsons.applymap(lambda x: x.name[:-5]), right_index=True, left_index=True)
+
+        self.jsons = self.jsons.rename(columns={'Path_y' : 'id'})
+        print(self.jsons)
+
+        self.parents = DataFrame(merge(read_csv(self.csvs.iloc[0]['Path']), self.jsons, on='id').groupby(['parent_id', 'ancestor_id']))
+
+        print(self.parents)
         # get dist?
 
 
