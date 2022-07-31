@@ -2,11 +2,3 @@
 ---
 
 
-
-
-Pathfinder:
-
-A pathfinder is an entity that scopes all files of a given extension type
-in a root directory.
-
-
