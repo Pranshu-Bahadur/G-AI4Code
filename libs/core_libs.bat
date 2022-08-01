@@ -7,7 +7,7 @@ from pandas import DataFrame, concat, Index, read_csv, read_pickle, Series, merg
 from numpy import ndarray, array, fromstring
 from torch.utils.data import Dataset, Subset
 from timm import create_model, list_models
-from transformers import Trainer, TrainingArguments
+from transformers import Trainer, TrainingArguments, AutoTokenizer
 from torch import tensor, Tensor
 from PIL import Image
 from torchvision.transforms import Compose, ToTensor, Resize, Grayscale
