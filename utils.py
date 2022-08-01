@@ -27,9 +27,18 @@ class ADataset(Dataset, Pathfinder):
         
         print(self.train)
 
+    def __getitem__(self, index : int):
+        sample = self.train.iloc[index].transpose()
+        sample['x'] = read_json(sample['abspath'])
+        sample['type_split'] = sample['x'].value_counts('cell_type')
+
+
+        return sample
+        
 
 
 
-ADataset("/home/verus-carver/Documents/code/datasets/AI4Code")
+
+print(ADataset("/home/verus-carver/Documents/code/datasets/AI4Code")[0])
 
 
