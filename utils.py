@@ -15,30 +15,17 @@ class Pathfinder(object):
 class ADataset(Dataset, Pathfinder):
     def __init__(self, rootdir : str, fextstr : str = "**/*.*"):
         super().__init__(rootdir)
-
         self.jsons = self.fext('json')
         self.csvs = self.fext('csv')
 
         self.jsons = merge(self.jsons, self.jsons.applymap(lambda x: x.name[:-5]), right_index=True, left_index=True)
+        self.jsons = self.jsons.rename(columns={'Path_y' : 'id', 'Path_x' : 'abspath'})
 
-        self.jsons = self.jsons.rename(columns={'Path_y' : 'id'})
-        print(self.jsons)
-
-        self.parents = DataFrame(merge(read_csv(self.csvs.iloc[0]['Path']), self.jsons, on='id').groupby(['parent_id', 'ancestor_id']))
-
-        print(self.parents)
-        # get dist?
-
-
-
-
+        self.train = concat(DataFrame(merge(read_csv(self.csvs.iloc[0]['Path']), \
+                self.jsons, on='id').fillna(0).groupby(['parent_id', 'ancestor_id']))[1].to_list())
+        self.train = merge(read_csv(self.csvs.iloc[2]['Path']), self.train, on='id')
         
-        #test = eval(open(DataFrame(self.meta['fpaths_df'].groupby(0)).to_dict()[1][1].iloc[0]['Path'], 'r').read())
-
-        #test = DataFrame(test)
-
-        #print(test)
-
+        print(self.train)
 
 
 

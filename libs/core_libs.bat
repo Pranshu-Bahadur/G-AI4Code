@@ -3,7 +3,7 @@ from functools import reduce, singledispatch
 from os import path, listdir, getenv
 from re import compile
 from uuid import uuid4
-from pandas import DataFrame, concat, Index, read_csv, read_pickle, Series, merge
+from pandas import DataFrame, concat, Index, read_csv, read_pickle, Series, merge, read_json
 from numpy import ndarray, array, fromstring
 from torch.utils.data import Dataset, Subset
 from timm import create_model, list_models
