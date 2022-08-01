@@ -38,13 +38,11 @@ class ADataset(Dataset, Pathfinder):
         y['rank'] = y.index
         y.index = y.pop('cell_id')
         code_x = x['source'][x['cell_type'] == 'code'].apply(self.tokenizers['code'].encode)
-        code_y = y['rank'][code_x.index]
+        code_y = Tensor(y['rank'][code_x.index].values)
 
         return code_x, code_y
         
 
-
-
-print(ADataset("/home/verus-carver/Documents/code/datasets/AI4Code")[1])
+#print(ADataset("/home/verus-carver/Documents/code/datasets/AI4Code")[1])
 
 
