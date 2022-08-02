@@ -13,7 +13,7 @@ class Pathfinder(object):
 
 class ADataset(Dataset, Pathfinder):
     def __init__(self, rootdir : str, fextstr : str = "**/*.*", tokenizers : dict = {
-        'code' : AutoTokenizer.from_pretrained("codeparrot/codeparrot"),
+        'code' : None, #AutoTokenizer.from_pretrained("codeparrot/codeparrot"),
         'markdown': None
             }):
         super().__init__(rootdir)
@@ -37,12 +37,12 @@ class ADataset(Dataset, Pathfinder):
         y = DataFrame(sample.pop('cell_order').split(' '), columns=['cell_id'])
         y['rank'] = y.index
         y.index = y.pop('cell_id')
-        code_x = x['source'][x['cell_type'] == 'code'].apply(self.tokenizers['code'].encode)
+        code_x = x['source'][x['cell_type'] == 'code']#.apply(self.tokenizers['code'].encode)
         code_y = Tensor(y['rank'][code_x.index].values)
 
         return code_x, code_y
         
 
-#print(ADataset("/home/verus-carver/Documents/code/datasets/AI4Code")[1])
+print(ADataset("/home/verus-carver/Documents/code/datasets/AI4Code")[0])
 
 
