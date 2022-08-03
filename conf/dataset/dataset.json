@@ -1,0 +1,16 @@
+{
+	"rootdir" : "/home/verus-carver/Documents/code/datasets/AI4Code",
+	"extstr" :  "**/*.*",
+	"substrs" : 
+	[
+		"train",
+		"json"
+	],
+
+	"tokenizers" : 
+	{
+		"code" : "codeparrot/codeparrot",
+		"markdown" : "codeparrot/codeparrot"
+	}
+}
+

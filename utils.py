@@ -1,48 +1,74 @@
+# Import Libraries
 from pathlib import Path
-from pandas import DataFrame
 
-def rootdir2Df(rootdir : str, fext : str = "**/*.*") -> DataFrame:
-    return DataFrame(list(Path(rootdir).glob(fext)), columns=['Path'])
 
-exec(open(''.join(rootdir2Df('libs').applymap(str)['Path'].values), 'r').read())
+def get_confs(rootdir : str, extstr : str = "**/*.json"):
+    return list(Path(rootdir).glob(extstr))
 
-class Pathfinder(object):
-    def __init__(self, rootdir : str, fextstr : str = "**/*.*"):
-        self.df = rootdir2Df(rootdir)
-        self.fext = lambda fextstr: self.df[self.df['Path'].apply(str).str.contains(fextstr)]
 
-class ADataset(Dataset, Pathfinder):
-    def __init__(self, rootdir : str, fextstr : str = "**/*.*", tokenizers : dict = {
-        'code' : None, #AutoTokenizer.from_pretrained("codeparrot/codeparrot"),
-        'markdown': None
-            }):
-        super().__init__(rootdir)
-        self.jsons = self.fext('json')
-        self.csvs = self.fext('csv')
+LIBS = list(map(lambda x: eval(open(x, 'r').read()), get_confs("libs")))
+exec('\n '.join(list(map(lambda x: ''.join(list(map(lambda k: f"from {k[0]} import {', '.join(k[1])}\n", x.items()))), LIBS))))
 
-        self.jsons = merge(self.jsons, self.jsons.applymap(lambda x: x.name[:-5]), right_index=True, left_index=True)
-        self.jsons = self.jsons.rename(columns={'Path_y' : 'id', 'Path_x' : 'abspath'})
+# ------
 
-        self.train = concat(DataFrame(merge(read_csv(self.csvs.iloc[0]['Path']), \
-                self.jsons, on='id').fillna(0).groupby(['parent_id', 'ancestor_id']))[1].to_list())
-        self.train = merge(read_csv(self.csvs.iloc[2]['Path']), self.train, on='id')
+
+def scope_dir(rootdir : str, **kwargs):
+    fdirdf = DataFrame(get_confs(rootdir, **kwargs), columns=['Path'])
+    fdirdf.index = fdirdf['Path'].apply(lambda x : x.name).rename('fname')
+    return fdirdf
+
+def eval_file(fdirdf, fname : str) -> str:
+    return open(fdirdf.loc[fname]['Path'], 'r').read()
+
+
+class AI4CodeDataset(Dataset):
+    def __init__(self, conf : str):
+        super().__init__()
+
+        self.conf = eval(eval_file(scope_dir('conf'), conf))
+        substrs = self.conf.pop('substrs')
+
+        types = ['code', 'markdown']
+
+        self.tokenizers = dict(zip(types, list(map(lambda tokenizer : AutoTokenizer.from_pretrained(tokenizer), self.conf.pop('tokenizers').values()))))
+
+
+
+        self.dir_df = scope_dir(**self.conf)
         
-        self.tokenizers = tokenizers
+        t_df, train_df = self._split_df(substrs)
+        
+        t_df = merge(*t_df['Path'].apply(lambda x: \
+                read_csv(x)).to_list(), on='id')
 
-        print(self.train)
+        train_df['id'] = train_df.index.to_series().apply(lambda x: x.split('.')[0])
+        self.train_df = merge(train_df, t_df, on='id')
+        self.train_df['labels'] = self.train_df.pop('cell_order').str.split(' ')
+
+
+    def _split_df(self, substrs : list) -> dict:
+
+        df = self.dir_df
+        return tuple(list(map(lambda substr: df[df.index.to_series().str.contains(substr)], substrs)))
+
 
     def __getitem__(self, index : int):
-        sample = self.train.iloc[index].transpose()
-        x = read_json(sample['abspath'])
-        y = DataFrame(sample.pop('cell_order').split(' '), columns=['cell_id'])
-        y['rank'] = y.index
-        y.index = y.pop('cell_id')
-        code_x = x['source'][x['cell_type'] == 'code']#.apply(self.tokenizers['code'].encode)
-        code_y = Tensor(y['rank'][code_x.index].values)
-
-        return code_x, code_y
         
+        sample = self.train_df.iloc[index]
+        sample['inputs'] = read_json(sample.pop('Path'))
 
-print(ADataset("/home/verus-carver/Documents/code/datasets/AI4Code")[0])
+        types = sample['inputs']['cell_type'].unique()
+ 
+        y = DataFrame(sample.pop('labels'), columns=['id'])
+        y['rank'] = y.index
+        y.index = y.pop('id').values
 
+        x = dict(zip(types, list(map(lambda label : sample['inputs'][sample['inputs']['cell_type'] == label], types))))
+
+        y = {'code' : Tensor(y['rank'][x['code'].index].values), 'markdown': Tensor(y['rank'][x['markdown'].index].values)}
+
+        sample = dict(zip(types, zip(y.values(), list(map(lambda kv: kv[1].applymap(self.tokenizers[kv[0]].encode), x.items())))))
+
+        print(sample)
+        return sample
 
