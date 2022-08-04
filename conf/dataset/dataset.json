@@ -9,8 +9,8 @@
 
 	"tokenizers" : 
 	{
-		"code" : "codeparrot/codeparrot",
-		"markdown" : "codeparrot/codeparrot"
+		"code" : "codeparrot/codeparrot-small",
+		"markdown" : "codeparrot/codeparrot-small"
 	}
 }
 

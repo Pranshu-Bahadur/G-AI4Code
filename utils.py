@@ -20,7 +20,13 @@ def scope_dir(rootdir : str, **kwargs):
 def eval_file(fdirdf, fname : str) -> str:
     return open(fdirdf.loc[fname]['Path'], 'r').read()
 
+"""
 
+TODO(s):
+    - [ ] better way to load tokenizer w/ [ ] tokenizer kwargs
+    = [ ] rework getitem func
+
+"""
 class AI4CodeDataset(Dataset):
     def __init__(self, conf : str):
         super().__init__()
@@ -30,7 +36,10 @@ class AI4CodeDataset(Dataset):
 
         types = ['code', 'markdown']
 
-        self.tokenizers = dict(zip(types, list(map(lambda tokenizer : AutoTokenizer.from_pretrained(tokenizer), self.conf.pop('tokenizers').values()))))
+        self.tokenizers = dict(zip(types, list(map(lambda tokenizer : \
+                AutoTokenizer.from_pretrained(tokenizer), list(self.conf.pop('tokenizers').values())))))
+
+        list(map(lambda x : x.add_special_tokens({'pad_token': '[PAD]'}),self.tokenizers.values()))
 
 
 
@@ -64,10 +73,10 @@ class AI4CodeDataset(Dataset):
         y.index = y.pop('id').values
 
         x = dict(zip(types, list(map(lambda label : sample['inputs'][sample['inputs']['cell_type'] == label], types))))
-
         y = {'code' : Tensor(y['rank'][x['code'].index].values), 'markdown': Tensor(y['rank'][x['markdown'].index].values)}
 
-        sample = dict(zip(types, zip(y.values(), list(map(lambda kv: kv[1].applymap(self.tokenizers[kv[0]].encode), x.items())))))
+        sample = dict(zip(types, zip(y.values(), list(map(lambda kv:\
+                self.tokenizers[kv[0]](kv[1]['source'].values.tolist(), truncation=True, padding=True, return_tensors="pt"), x.items())))))
 
         print(sample)
         return sample

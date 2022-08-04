@@ -27,4 +27,4 @@ F: X -> X' | X' = (m1, c1, ..., m(k-|C|))
 F = G o (H o C, J o M) | H: C -> C', J: M -> M', G: C' x M' -> X'
 
 
-- [ ] Undesrtand Code Parrot
+- [ ] Understand Code Parrot
